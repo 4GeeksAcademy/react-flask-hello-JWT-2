@@ -1,7 +1,7 @@
-"""
-This module takes care of starting the API Server, Loading the DB and Adding the endpoints
-"""
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_migrate import Migrate
 from flask_swagger import swagger
@@ -18,7 +18,7 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-app.config["JWT_SECRET_KEY"] = os.getenv("FLASK_APP_KEY", "super-secret")
+app.config["JWT_SECRET_KEY"] = os.getenv("FLASK_APP_KEY", "super-secret-key")
 jwt = JWTManager(app)
 
 db_url = os.getenv("DATABASE_URL")
@@ -33,7 +33,6 @@ MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
 
 setup_admin(app)
-
 setup_commands(app)
 
 app.register_blueprint(api, url_prefix='/api')
