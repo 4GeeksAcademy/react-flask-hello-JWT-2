@@ -4,6 +4,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 
 api = Blueprint('api', __name__)
 
+
 @api.route('/signup', methods=['POST'])
 def signup():
     body = request.get_json()
@@ -23,6 +24,7 @@ def signup():
 
     return jsonify({"message": "Usuario creado con éxito"}), 201
 
+
 @api.route('/token', methods=['POST'])
 def create_token():
     body = request.get_json()
@@ -33,17 +35,21 @@ def create_token():
     if not user:
         return jsonify({"error": "Correo o contraseña incorrectos"}), 401
 
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
     return jsonify({
         "token": access_token,
         "user_id": user.id
     }), 200
 
+
 @api.route('/private', methods=['GET'])
 @jwt_required()
 def private_route():
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    user = User.query.get(int(current_user_id))
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
     return jsonify({
         "logged_in_as": user.email,
         "message": "Acceso concedido"

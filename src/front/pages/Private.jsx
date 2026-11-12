@@ -2,42 +2,64 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export const Private = () => {
-    const [mensaje, setMensaje] = useState("");
+    const [userData, setUserData] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
+
         if (!token) {
             navigate("/login");
             return;
         }
 
-        fetch(process.env.BACKEND_URL + "/api/private", {
-            method: "GET",
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        })
-        .then(resp => {
-            if (!resp.ok) throw new Error("Token inválido");
-            return resp.json();
-        })
-        .then(data => setMensaje(data.message))
-        .catch(() => {
-            sessionStorage.removeItem("token");
-            navigate("/login");
-        });
-    }, []);
+        const fetchPrivateData = async () => {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    return (
-        <div className="container mt-5 text-center">
-            <h1>Zona Privada</h1>
-            <p>{mensaje || "Cargando..."}</p>
-            <button className="btn btn-danger mt-3" onClick={() => {
+            try {
+                const response = await fetch(`${backendUrl}/api/private`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setUserData(data);
+                } else {
+                    sessionStorage.removeItem("token");
+                    navigate("/login");
+                }
+            } catch (error) {
+                console.error("Error validando el token:", error);
                 sessionStorage.removeItem("token");
                 navigate("/login");
-            }}>
-                Cerrar Sesión
+            }
+        };
+
+        fetchPrivateData();
+    }, [navigate]);
+
+    const handleLogout = () => {
+        sessionStorage.removeItem("token");
+        navigate("/login");
+    };
+
+    if (!userData) {
+        return <div className="container mt-5">Verificando acceso...</div>;
+    }
+
+    return (
+        <div className="container mt-5">
+            <h2>Zona Privada</h2>
+            <div className="alert alert-success">
+                <p><strong>Estado:</strong> {userData.message}</p>
+                <p><strong>Usuario autenticado:</strong> {userData.logged_in_as}</p>
+            </div>
+            <button onClick={handleLogout} className="btn btn-danger">
+                Cerrar sesión
             </button>
         </div>
     );
